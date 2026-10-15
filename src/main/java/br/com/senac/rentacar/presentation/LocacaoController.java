@@ -18,12 +18,14 @@ public class LocacaoController {
     private LocacaoRepository locacaoRepository;
 
     @GetMapping
+    @Operation(summary = "Metodo de listagem de locacoes", description = "Metodo responsavel por listar todas as locacoes cadastradas!")
     public ResponseEntity<?> listarTodos(){
 
         return ResponseEntity.ok(locacaoRepository.findAll());
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Metodo de busca de locacao por id", description = "Metodo responsavel por buscar uma locacao especifica atraves do seu id!")
     public ResponseEntity<Locacao> buscarPorId(@PathVariable Long id){
 
         Locacao locacaoBanco = locacaoRepository.findById(id).orElse(null);
@@ -44,6 +46,7 @@ public class LocacaoController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Metodo de atualizacao de locacoes", description = "Metodo responsavel por atualizar os dados de uma locacao existente!")
     public ResponseEntity<Locacao> atualizar(@PathVariable Long id, @RequestBody Locacao locacao) {
         try {
             Locacao locacaoBanco = locacaoRepository.findById(id).orElse(null);
@@ -66,6 +69,7 @@ public class LocacaoController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Metodo de exclusao de locacoes", description = "Metodo responsavel por excluir uma locacao existente!")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
         locacaoRepository.deleteById(id);
         return ResponseEntity.ok().build();

@@ -1,12 +1,12 @@
-package com.example.aula20263.application.services;
+package br.com.senac.rentacar.application.services;
 
 
 import br.com.senac.rentacar.application.DTOs.*;
 import br.com.senac.rentacar.application.services.TokenService;
 import br.com.senac.rentacar.domain.entities.Usuario;
 import br.com.senac.rentacar.domain.respository.UsuarioRepository;
-import lombok.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class UsuarioService {
     @Autowired
     private TokenService tokenService;
 
-    @Value("${spring.secretkey}")
+    @Value("${spring.secret}")
     private String secret;
 
 

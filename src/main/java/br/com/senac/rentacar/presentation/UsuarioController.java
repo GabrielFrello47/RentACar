@@ -4,6 +4,7 @@ import br.com.senac.rentacar.application.DTOs.AtualizarStatusRequest;
 import br.com.senac.rentacar.application.DTOs.CriarAdminRequest;
 import br.com.senac.rentacar.application.DTOs.CriarAdminResponse;
 import br.com.senac.rentacar.application.DTOs.UsuarioResponse;
+import br.com.senac.rentacar.application.services.UsuarioService;
 import br.com.senac.rentacar.domain.entities.EnumStatusUsuario;
 import br.com.senac.rentacar.domain.entities.Usuario;
 import br.com.senac.rentacar.domain.respository.UsuarioRepository;
@@ -27,7 +28,7 @@ public class UsuarioController {
 
 
     @Autowired
-    private com.example.aula20263.application.services.UsuarioService usuarioService;
+    private UsuarioService usuarioService;
 
     @GetMapping
     public ResponseEntity<List<UsuarioResponse>> listarTodos(){

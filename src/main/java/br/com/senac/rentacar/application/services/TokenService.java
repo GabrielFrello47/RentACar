@@ -17,7 +17,7 @@ import java.time.temporal.ChronoUnit;
 @Service
 public class TokenService {
 
-    @Value("${spring.secretkey}")
+    @Value("${spring.secret}")
     private String secret;
 
     @Value("${spring.tempo_expiracao}")

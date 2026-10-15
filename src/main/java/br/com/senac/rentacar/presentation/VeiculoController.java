@@ -18,12 +18,14 @@ public class VeiculoController {
     private VeiculoRepository veiculoRepository;
 
     @GetMapping
+    @Operation(summary = "Metodo de listagem de veiculos", description = "Metodo responsavel por listar todos os veiculos cadastrados!")
     public ResponseEntity<?> listarTodos(){
 
         return ResponseEntity.ok(veiculoRepository.findAll());
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Metodo de busca de veiculo por id", description = "Metodo responsavel por buscar um veiculo especifico atraves do seu id!")
     public ResponseEntity<Veiculo> buscarPorId(@PathVariable Long id){
 
         Veiculo veiculoBanco = veiculoRepository.findById(id).orElse(null);
@@ -44,6 +46,7 @@ public class VeiculoController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Metodo de atualizacao de veiculos", description = "Metodo responsavel por atualizar os dados de um veiculo existente!")
     public ResponseEntity<Veiculo> atualizar(@PathVariable Long id, @RequestBody Veiculo veiculo) {
         try {
             Veiculo veiculoBanco = veiculoRepository.findById(id).orElse(null);
@@ -66,6 +69,7 @@ public class VeiculoController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Metodo de exclusao de veiculos", description = "Metodo responsavel por excluir um veiculo existente!")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
         veiculoRepository.deleteById(id);
         return ResponseEntity.ok().build();

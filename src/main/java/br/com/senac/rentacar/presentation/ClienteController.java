@@ -18,12 +18,14 @@ public class ClienteController {
     private ClienteRepository clienteRepository;
 
     @GetMapping
+    @Operation(summary = "Metodo de listagem de clientes", description = "Metodo responsavel por listar todos os clientes cadastrados!")
     public ResponseEntity<?> listarTodos(){
 
         return ResponseEntity.ok(clienteRepository.findAll());
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Metodo de busca de cliente por id", description = "Metodo responsavel por buscar um cliente especifico atraves do seu id!")
     public ResponseEntity<Cliente> buscarPorId(@PathVariable Long id){
 
         Cliente clienteBanco = clienteRepository.findById(id).orElse(null);
@@ -44,6 +46,7 @@ public class ClienteController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Metodo de atualizacao de clientes", description = "Metodo responsavel por atualizar os dados de um cliente existente!")
     public ResponseEntity<Cliente> atualizar(@PathVariable Long id, @RequestBody Cliente cliente) {
         try {
             Cliente clienteBanco = clienteRepository.findById(id).orElse(null);
@@ -65,6 +68,7 @@ public class ClienteController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Metodo de exclusao de clientes", description = "Metodo responsavel por excluir um cliente existente!")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
         clienteRepository.deleteById(id);
         return ResponseEntity.ok().build();
