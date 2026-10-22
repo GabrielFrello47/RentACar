@@ -1,9 +1,6 @@
 package br.com.senac.rentacar.presentation;
 
-import br.com.senac.rentacar.application.DTOs.AtualizarStatusRequest;
-import br.com.senac.rentacar.application.DTOs.CriarAdminRequest;
-import br.com.senac.rentacar.application.DTOs.CriarAdminResponse;
-import br.com.senac.rentacar.application.DTOs.UsuarioResponse;
+import br.com.senac.rentacar.application.DTOs.*;
 import br.com.senac.rentacar.application.services.UsuarioService;
 import br.com.senac.rentacar.domain.entities.EnumStatusUsuario;
 import br.com.senac.rentacar.domain.entities.Usuario;
@@ -22,9 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioController {
-
-    @Autowired
-    private UsuarioRepository usuarioRepository;
 
 
     @Autowired
@@ -49,13 +43,10 @@ public class UsuarioController {
 
     }
 
-
-
-
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id){
+    public ResponseEntity<UsuarioResponse> buscarPorId(@PathVariable Long id){
 
-        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+        UsuarioResponse usuarioBanco = usuarioService.buscarPorId(id);
         if(usuarioBanco!= null ){
             return  ResponseEntity.ok(usuarioBanco);
         }
@@ -67,43 +58,37 @@ public class UsuarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Usuario> criar(@RequestBody Usuario usuario){
+    public ResponseEntity<?> criar(@RequestBody UsuarioRequest usuario){
 
-        var usuarioBanco = usuarioRepository.save(usuario);
-        return ResponseEntity.ok(usuarioBanco);
+        try {
+            UsuarioResponse usuarioBanco = usuarioService.salvarUsuario(usuario,0L);
+            return ResponseEntity.ok(usuarioBanco);
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
 
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusRequest statusRequest){
 
-        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
-        if(usuarioBanco!= null ){
-            usuarioBanco.setStatus(statusRequest.status());
-            usuarioRepository.save(usuarioBanco);
-            return  ResponseEntity.ok().build();
+        var atualizarUsuario = usuarioService.atualizarStatus(statusRequest.status(),id);
+
+        if(atualizarUsuario){
+            return ResponseEntity.ok().build();
         }
 
         return  ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> atualizar(@PathVariable Long id, @RequestBody Usuario usuario){
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody UsuarioRequest usuario){
 
-        try{
-            Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
-            if(usuarioBanco!= null ){
-                usuarioBanco.setStatus(usuario.getStatus());
-                usuarioBanco.setNome(usuario.getNome());
-                usuarioBanco.setCpf(usuario.getCpf());
-                usuarioBanco.setEmail(usuario.getEmail());
-                usuarioBanco.setSenha(usuario.getSenha());
-                usuarioRepository.save(usuarioBanco);
-                return  ResponseEntity.ok().build();
-            }
-            return  ResponseEntity.notFound().build();
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+        try {
+            UsuarioResponse usuarioBanco = usuarioService.salvarUsuario(usuario,id);
+            return ResponseEntity.ok(usuarioBanco);
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
 
     }
@@ -111,14 +96,14 @@ public class UsuarioController {
     @DeleteMapping("/{id}/excluir")
     public ResponseEntity<Void> excluir(@PathVariable Long id){
 
-        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
-        if(usuarioBanco!= null ){
-            usuarioBanco.setStatus(EnumStatusUsuario.EXCLUIDO);
-            usuarioRepository.save(usuarioBanco);
-            return  ResponseEntity.ok().build();
+        var atualizarUsuario = usuarioService.atualizarStatus(EnumStatusUsuario.EXCLUIDO,id);
+
+        if(atualizarUsuario){
+            return ResponseEntity.ok().build();
         }
 
         return  ResponseEntity.notFound().build();
+
     }
 
 

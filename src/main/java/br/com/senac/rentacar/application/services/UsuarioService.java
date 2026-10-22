@@ -3,6 +3,7 @@ package br.com.senac.rentacar.application.services;
 
 import br.com.senac.rentacar.application.DTOs.*;
 import br.com.senac.rentacar.application.services.TokenService;
+import br.com.senac.rentacar.domain.entities.EnumStatusUsuario;
 import br.com.senac.rentacar.domain.entities.Usuario;
 import br.com.senac.rentacar.domain.respository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ public class UsuarioService {
     @Autowired
     private TokenService tokenService;
 
-    @Value("${spring.secret}")
+    @Value("${spring.secretkey}")
     private String secret;
 
 
@@ -54,5 +55,54 @@ public class UsuarioService {
         usuarioRepository.save(usuarioAdminSalvar);
 
         return new CriarAdminResponse(usuarioAdminSalvar.getId(),"Usuario Salvo com sucesso!");
+    }
+
+    public UsuarioResponse salvarUsuario(UsuarioRequest usuario, Long id) {
+
+        //Novo Usuario
+        if(id == 0L) {
+            Usuario usuarioBanco = new Usuario(usuario);
+            usuarioRepository.save(usuarioBanco);
+
+            return new UsuarioResponse(usuarioBanco);
+        }else {
+            //Usuario existente
+            Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+            if(usuarioBanco!= null ){
+                usuarioBanco.setNome(usuario.nome());
+                usuarioBanco.setCpf(new CPF(usuario.cpf()));
+                usuarioBanco.setEmail(usuario.email());
+                usuarioBanco.setSenha(usuario.senha());
+                usuarioRepository.save(usuarioBanco);
+                return  new UsuarioResponse(usuarioBanco);
+            }
+
+        }
+
+        return null;
+    }
+
+    public UsuarioResponse buscarPorId(Long id) {
+
+        var usuario = usuarioRepository.findById(id).orElse(null);
+        if(usuario == null){
+            return null;
+        }
+
+        return new UsuarioResponse(usuario);
+
+
+    }
+
+    public boolean atualizarStatus(EnumStatusUsuario status, Long id) {
+
+        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+        if(usuarioBanco!= null ){
+            usuarioBanco.setStatus(status);
+            usuarioRepository.save(usuarioBanco);
+            return  true;
+        }
+        return false;
+
     }
 }
