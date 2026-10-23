@@ -1,11 +1,16 @@
 package br.com.senac.rentacar.application.services;
 
 import br.com.senac.rentacar.application.DTOs.LoginRequest;
+import br.com.senac.rentacar.application.DTOs.UsuarioLogado;
+import br.com.senac.rentacar.domain.entities.Token;
+import br.com.senac.rentacar.domain.respository.TokenRepository;
+import br.com.senac.rentacar.domain.respository.UsuarioRepository;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +22,7 @@ import java.time.temporal.ChronoUnit;
 @Service
 public class TokenService {
 
-    @Value("${spring.secret}")
+    @Value("${spring.secretkey}")
     private String secret;
 
     @Value("${spring.tempo_expiracao}")
@@ -25,10 +30,20 @@ public class TokenService {
 
     private String emissor = "DEVTEST";
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private TokenRepository tokenRepository;
+
 
     public String gerarToken(LoginRequest loginResquestDto){
 
         Algorithm algorithm = Algorithm.HMAC256(secret);
+
+        var usuario = usuarioRepository.findAll()
+                .stream().filter( u-> u.getEmail().equals(loginResquestDto.email()))
+                .findFirst().orElse(null);
 
         String token = JWT.create()
                 .withIssuer(emissor)
@@ -36,15 +51,26 @@ public class TokenService {
                 .withExpiresAt(this.gerarDataExpiracao())
                 .sign(algorithm);
 
+
+        tokenRepository.save(new Token(token,usuario));
+
         return token;
     }
 
-    public DecodedJWT verificarToken(String token) throws JWTVerificationException {
+    public UsuarioLogado verificarToken(String token) throws JWTVerificationException {
         Algorithm algorithm = Algorithm.HMAC256(secret);
 
         JWTVerifier verificador = JWT.require(algorithm).withIssuer(emissor).build();
 
-        return verificador.verify(token);
+        verificador.verify(token);
+
+        var tokenBanco = tokenRepository.findTokenByToken(token).orElse(null);
+
+        if(tokenBanco==null){
+            throw  new IllegalArgumentException("Token Invalido!");
+        }
+
+        return new UsuarioLogado(tokenBanco.getUsuario());
 
     }
 

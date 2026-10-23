@@ -6,6 +6,7 @@ import br.com.senac.rentacar.application.services.TokenService;
 import br.com.senac.rentacar.domain.entities.EnumStatusUsuario;
 import br.com.senac.rentacar.domain.entities.Usuario;
 import br.com.senac.rentacar.domain.respository.UsuarioRepository;
+import br.com.senac.rentacar.domain.valueobject.CPF;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
