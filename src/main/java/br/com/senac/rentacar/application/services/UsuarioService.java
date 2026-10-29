@@ -22,7 +22,7 @@ public class UsuarioService {
     @Autowired
     private TokenService tokenService;
 
-    @Value("${spring.secretkey}")
+    @Value("${spring.secret}")
     private String secret;
 
 
