@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.back.CategoriaController">
+   <children>
+      <Button layoutX="24.0" layoutY="354.0" mnemonicParsing="false" onAction="#voltar" text="Voltar" />
+      <Button layoutX="501.0" layoutY="354.0" mnemonicParsing="false" onAction="#salvarCategoria" text="Salvar" />
+      <Label layoutX="78.0" layoutY="40.0" text="Dados da categoria" />
+      <Label layoutX="78.0" layoutY="76.0" text="Nome" />
+      <Label layoutX="78.0" layoutY="116.0" text="Descricao" />
+      <TextField fx:id="txtNome" layoutX="150.0" layoutY="72.0" prefWidth="260.0" promptText="Ex: Economico, SUV, Utilitario" />
+      <TextField fx:id="txtDescricao" layoutX="150.0" layoutY="112.0" prefWidth="260.0" />
+      <Label layoutX="78.0" layoutY="180.0" text="Autorizacao: informe um administrador" />
+      <Label layoutX="78.0" layoutY="216.0" text="E-mail" />
+      <Label layoutX="78.0" layoutY="256.0" text="Senha" />
+      <TextField fx:id="txtEmailAdmin" layoutX="150.0" layoutY="212.0" prefWidth="260.0" />
+      <PasswordField fx:id="txtSenhaAdmin" layoutX="150.0" layoutY="252.0" prefWidth="260.0" />
+   </children>
+</AnchorPane>
