@@ -1,24 +1,11 @@
-import Link from "next/link";
 import ClienteForm from "../components/ClientesForm";
+import CabecalhoCadastro from "@/app/components/CabecalhoCadastro";
 
 export default function CadastroCliente() {
 
 return (
-    <div>
-        <div>
-            <Link href="/clientes">
-                Voltar para Listagem
-            </Link>
-        </div>
-        <h1>
-            Novo Cliente
-        </h1>
-        <p>
-            Preencha os dados abaixo para cadastrar um novo Cliente
-        </p>
-        <div>
+        <CabecalhoCadastro voltarHref="/clientes" titulo="Novo Cliente" descricao="Preencha os dados abaixo para cadastrar um novo Cliente">
             <ClienteForm/>
-        </div>
-    </div>
-)
+        </CabecalhoCadastro>
+    )
 }

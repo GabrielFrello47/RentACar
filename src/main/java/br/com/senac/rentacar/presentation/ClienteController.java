@@ -2,6 +2,7 @@ package br.com.senac.rentacar.presentation;
 
 import br.com.senac.rentacar.domain.entities.Cliente;
 import br.com.senac.rentacar.domain.respository.ClienteRepository;
+import br.com.senac.rentacar.domain.valueobject.CPF;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,12 @@ public class ClienteController {
 
     @Autowired
     private ClienteRepository clienteRepository;
+
+    @Autowired
+    private br.com.senac.rentacar.domain.respository.LocacaoRepository locacaoRepository;
+
+    @Autowired
+    private br.com.senac.rentacar.application.services.CpfDuplicidade cpfDuplicidade;
 
     @GetMapping
     @Operation(summary = "Metodo de listagem de clientes", description = "Metodo responsavel por listar todos os clientes cadastrados!")
@@ -39,39 +46,72 @@ public class ClienteController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Metodo de criar de clientes", description = "Metodo responsavel de criação de novos clientes!")
-    public ResponseEntity<Cliente> criar(@RequestBody Cliente cliente){
+    public ResponseEntity<?> criar(@RequestBody Cliente cliente){
 
+        String erro = validar(cliente, null);
+        if (erro != null) {
+            return ResponseEntity.badRequest().body(erro);
+        }
+
+        // o id sempre e gerado pelo banco: ignora qualquer id enviado no corpo
+        cliente.setId(null);
         var clienteBanco = clienteRepository.save(cliente);
         return ResponseEntity.ok(clienteBanco);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Metodo de atualizacao de clientes", description = "Metodo responsavel por atualizar os dados de um cliente existente!")
-    public ResponseEntity<Cliente> atualizar(@PathVariable Long id, @RequestBody Cliente cliente) {
-        try {
-            Cliente clienteBanco = clienteRepository.findById(id).orElse(null);
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody Cliente cliente) {
 
-            if (clienteBanco != null) {
-                clienteBanco.setNome(cliente.getNome());
-                clienteBanco.setCpf(cliente.getCpf());
-                clienteBanco.setTelefone(cliente.getTelefone());
-                clienteBanco.setEmail(cliente.getEmail());
-                clienteRepository.save(clienteBanco);
-                return ResponseEntity.ok().build();
-            }
-
-            return ResponseEntity.notFound().build();
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+        String erro = validar(cliente, id);
+        if (erro != null) {
+            return ResponseEntity.badRequest().body(erro);
         }
+
+        Cliente clienteBanco = clienteRepository.findById(id).orElse(null);
+
+        if (clienteBanco != null) {
+            clienteBanco.setNome(cliente.getNome());
+            clienteBanco.setCpf(cliente.getCpf());
+            clienteBanco.setTelefone(cliente.getTelefone());
+            clienteBanco.setEmail(cliente.getEmail());
+            clienteRepository.save(clienteBanco);
+            return ResponseEntity.ok().build();
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Metodo de exclusao de clientes", description = "Metodo responsavel por excluir um cliente existente!")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        if (!clienteRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        if (locacaoRepository.existsByClienteAndStatus(String.valueOf(id),
+                br.com.senac.rentacar.domain.entities.EnumStatusLocacao.EM_ANDAMENTO)) {
+            // antes a exclusao passava e deixava a locacao orfa com o veiculo preso como Alugado
+            return ResponseEntity.badRequest().build();
+        }
         clienteRepository.deleteById(id);
         return ResponseEntity.ok().build();
+    }
+
+    /** @return a mensagem de erro, ou null se o cliente e valido. */
+    private String validar(Cliente cliente, Long idAtual) {
+        if (cliente == null || cliente.getNome() == null || cliente.getNome().isBlank()) {
+            return "Informe o nome do cliente!";
+        }
+        if (!CPF.isValidCpf(cliente.getCpf())) {
+            return "CPF Invalido!";
+        }
+        if (cpfDuplicidade.clienteJaTem(cliente.getCpf(), idAtual)) {
+            return "Ja existe um cliente com este CPF!";
+        }
+        if (cliente.getEmail() != null && !cliente.getEmail().isBlank() && !cliente.getEmail().contains("@")) {
+            return "Email Invalido!";
+        }
+        return null;
     }
 
 }

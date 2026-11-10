@@ -1,36 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import axios from "axios";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/redux/store";
+import { buscarListaUsuarios } from "@/app/services/usuarioService";
+import { buscarListaClientes } from "@/app/services/clienteService";
+import { buscarListaVeiculos } from "@/app/services/veiculoService";
+import { buscarListaLocacoes } from "@/app/services/locacaoService";
 
 interface CardInfo {
   titulo: string;
   descricao: string;
   href: string;
-  endpoint: string;
+  somenteAdmin?: boolean;
+  buscar: () => Promise<unknown[]>;
 }
 
 const cards: CardInfo[] = [
-  { titulo: "Usuários", descricao: "Contas com acesso ao painel", href: "/usuarios", endpoint: "http://localhost:8080/usuarios" },
-  { titulo: "Clientes", descricao: "Cadastro de clientes da locadora", href: "/clientes", endpoint: "http://localhost:8080/clientes" },
-  { titulo: "Veículos", descricao: "Frota disponível para locação", href: "/veiculos", endpoint: "http://localhost:8080/veiculos" },
-  { titulo: "Locações", descricao: "Contratos de aluguel em andamento", href: "/locacoes", endpoint: "http://localhost:8080/locacoes" },
+  { titulo: "Usuários", descricao: "Atendentes com acesso ao painel", href: "/usuarios", somenteAdmin: true, buscar: buscarListaUsuarios },
+  { titulo: "Clientes", descricao: "Cadastro de clientes da locadora", href: "/clientes", buscar: buscarListaClientes },
+  { titulo: "Veículos", descricao: "Frota disponível para locação", href: "/veiculos", buscar: () => buscarListaVeiculos() },
+  { titulo: "Locações", descricao: "Contratos de aluguel em andamento", href: "/locacoes", buscar: buscarListaLocacoes },
 ];
 
 export default function Home() {
+  const usuario = useSelector((state: RootState) => state.auth.usuario);
+  const ehAdmin = usuario?.role === "ROLE_ADMIN";
   const [contagens, setContagens] = useState<Record<string, number | null>>({});
 
+  const cardsVisiveis = cards.filter((card) => !card.somenteAdmin || ehAdmin);
+
   useEffect(() => {
-    cards.forEach(async (card) => {
-      try {
-        const res = await axios.get<unknown[]>(card.endpoint);
-        setContagens((prev) => ({ ...prev, [card.titulo]: res.data.length }));
-      } catch (error) {
-        setContagens((prev) => ({ ...prev, [card.titulo]: null }));
-      }
-    });
-  }, []);
+    cards
+      .filter((card) => !card.somenteAdmin || ehAdmin)
+      .forEach(async (card) => {
+        try {
+          const lista = await card.buscar();
+          setContagens((prev) => ({ ...prev, [card.titulo]: lista.length }));
+        } catch {
+          setContagens((prev) => ({ ...prev, [card.titulo]: null }));
+        }
+      });
+  }, [ehAdmin]);
 
   return (
     <div className="min-h-screen w-full bg-slate-50 p-6 md:p-8 font-sans">
@@ -45,7 +57,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {cards.map((card) => (
+          {cardsVisiveis.map((card) => (
             <Link
               key={card.titulo}
               href={card.href}

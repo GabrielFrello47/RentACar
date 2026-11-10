@@ -21,7 +21,20 @@ public class Locacao {
 
     public Double valorTotal;
 
+    // id do cliente / id do veiculo (mantido como texto, como no projeto original)
     public String cliente;
 
     public String veiculo;
+
+    // definido pelo sistema (null = locacao antiga, anterior ao controle de status)
+    @Enumerated(EnumType.STRING)
+    public EnumStatusLocacao status;
+
+    public LocalDate dataDevolucao;
+
+    public Integer quilometragemDevolucao;
+
+    public boolean emAndamento() {
+        return status == EnumStatusLocacao.EM_ANDAMENTO;
+    }
 }

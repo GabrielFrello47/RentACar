@@ -3,11 +3,8 @@ package br.com.senac.rentacar.presentation;
 import br.com.senac.rentacar.application.DTOs.*;
 import br.com.senac.rentacar.application.services.UsuarioService;
 import br.com.senac.rentacar.domain.entities.EnumStatusUsuario;
-import br.com.senac.rentacar.domain.entities.Usuario;
-import br.com.senac.rentacar.domain.respository.UsuarioRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,16 +28,34 @@ public class UsuarioController {
     }
 
     @PostMapping("/admin")
-    public ResponseEntity<CriarAdminResponse> criarAdmin(@RequestBody CriarAdminRequest criarAdminRequest){
+    @Operation(summary = "Criar administrador", description = "Cria um administrador. Exige a secretKey do servidor (usada pelo aplicativo desktop).")
+    public ResponseEntity<?> criarAdmin(@RequestBody CriarAdminRequest criarAdminRequest){
 
         try{
             CriarAdminResponse respostaSalvar = usuarioService.criarAdmin(criarAdminRequest);
+
+            if (respostaSalvar == null) {
+                // antes devolvia 200 "salvo com sucesso" mesmo com a chave errada
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Chave invalida!");
+            }
             return ResponseEntity.ok(respostaSalvar);
 
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
 
+    }
+
+    @GetMapping("/buscarusuariologado")
+    @Operation(summary = "Usuario logado", description = "Devolve os dados do usuario dono do token enviado.")
+    public ResponseEntity<UsuarioResponse> buscarUsuarioLogado(){
+
+        UsuarioResponse usuarioLogado = usuarioService.buscarUsuarioLogado();
+        if(usuarioLogado != null){
+            return ResponseEntity.ok(usuarioLogado);
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/{id}")
@@ -72,6 +87,11 @@ public class UsuarioController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusRequest statusRequest){
 
+        if (statusRequest == null || statusRequest.status() == null) {
+            // antes um corpo sem "status" gravava null e o usuario ficava sem conseguir logar
+            return ResponseEntity.badRequest().build();
+        }
+
         var atualizarUsuario = usuarioService.atualizarStatus(statusRequest.status(),id);
 
         if(atualizarUsuario){
@@ -86,6 +106,9 @@ public class UsuarioController {
 
         try {
             UsuarioResponse usuarioBanco = usuarioService.salvarUsuario(usuario,id);
+            if (usuarioBanco == null) {
+                return ResponseEntity.notFound().build();
+            }
             return ResponseEntity.ok(usuarioBanco);
         }catch (Exception e){
             return ResponseEntity.badRequest().body(e.getMessage());

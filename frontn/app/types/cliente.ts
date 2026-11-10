@@ -1,17 +1,16 @@
-export class Cliente{
+export class Cliente {
 
-    constructor (
-    
+    constructor(
+
         public id: number | null,
-        public nome:string,
-        public cpf:string,
-        public telefone:string,
-        public email:string,
-    
-        ){}
-    }
-        export interface ClienteFormProps{
-            ClienteExistente?:Cliente
-        }
-    
-    
+        public nome: string,
+        public cpf: string,
+        public telefone: string,
+        public email: string,
+
+    ) { }
+}
+
+export interface ClienteFormProps {
+    clienteExistente?: Cliente
+}

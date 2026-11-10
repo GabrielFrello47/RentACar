@@ -2,17 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 const links = [
   { label: "Home", href: "/home" },
-  { label: "Usuários", href: "/usuarios" },
+  { label: "Usuários", href: "/usuarios", somenteAdmin: true },
   { label: "Clientes", href: "/clientes" },
+  { label: "Categorias", href: "/categorias", somenteAdmin: true },
   { label: "Veículos", href: "/veiculos" },
   { label: "Locações", href: "/locacoes" },
-];
+] as { label: string; href: string; somenteAdmin?: boolean }[];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const usuario = useSelector((state: RootState) => state.auth.usuario);
+  const ehAdmin = usuario?.role === "ROLE_ADMIN";
+  // atendentes comuns nao tem acesso a tela de usuarios (a API devolve 403)
+  const linksVisiveis = links.filter((link) => !link.somenteAdmin || ehAdmin);
 
   return (
     <aside className="w-64 shrink-0 bg-[#1A1917] text-white flex flex-col min-h-screen">
@@ -30,7 +37,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 py-6 px-3 space-y-1">
-        {links.map((link) => {
+        {linksVisiveis.map((link) => {
           const active = pathname === link.href;
           return (
             <Link

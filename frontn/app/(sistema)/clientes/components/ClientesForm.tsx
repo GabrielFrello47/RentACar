@@ -1,88 +1,45 @@
-// Informa ao Next.js que este componente roda no NAVEGADOR (Client Component).
-// Necessário por causa do useState, do useRouter e dos eventos (onChange).
 "use client";
 
-// Biblioteca para fazer requisições HTTP à API (aqui, o POST para cadastrar).
-import axios from "axios";
-// Hook do Next.js que permite navegar entre páginas via código (router.push).
-// Atenção: no App Router o import é de "next/navigation", e não de "next/router".
 import { useRouter } from "next/navigation";
-// Importa a classe Cliente (id, nome, cpf, telefone, email).
-// Aqui ela é usada com "new", então Cliente é uma classe e não apenas uma interface.
-import { Cliente } from "@/app/types/cliente";
-// Componente de link do Next.js: navega sem recarregar a página inteira.
+import { Cliente, ClienteFormProps } from "@/app/types/cliente";
+import { atualizarCliente, salvarCliente } from "@/app/services/clienteService";
+import { mensagemDeErro } from "@/app/services/api";
 import Link from "next/link";
-// Hook do React para guardar valores que, ao mudar, atualizam a tela.
 import { useState } from "react";
 
-// Declara o componente do formulário. "export default" o torna o componente principal do arquivo.
-export default function ClienteForm() {
+export default function ClienteForm({ clienteExistente }: ClienteFormProps) {
 
-    // Cria o objeto router, usado mais abaixo para redirecionar o usuário após salvar.
     const router = useRouter();
-    // Estado que guarda o cliente que está sendo digitado no formulário.
-    // Começa com id null (ainda não existe no banco) e os demais campos como texto vazio.
-    const [cliente, setCliente] = useState<Cliente>(new Cliente(null, "", "", "", ""));
+    const [cliente, setCliente] = useState<Cliente>(clienteExistente ?? new Cliente(null, "", "", "", ""));
 
-    // Função chamada sempre que o usuário digita em algum campo.
-    // "campo" só pode ser um destes 4 nomes (union type) e "valor" é o texto digitado.
     const handlerChange = (campo: 'nome' | 'cpf' | 'telefone' | 'email', valor: string) => {
-        // Usa a forma funcional do setState: recebe o valor anterior do estado
-        // e devolve o novo. É a forma mais segura de atualizar com base no estado atual.
-        setCliente(valorAnterior =>
-            // Cria um novo objeto Cliente (o React precisa de um objeto novo para detectar a mudança).
-            new Cliente(
-                // O id nunca muda no formulário; mantém o anterior.
-                valorAnterior.id,
-                // Se o campo digitado for "nome", usa o novo valor; senão, mantém o nome anterior.
-                campo === 'nome' ? valor : valorAnterior.nome,
-                // Mesma lógica para o cpf.
-                campo === 'cpf' ? valor : valorAnterior.cpf,
-                // Mesma lógica para o telefone.
-                campo === 'telefone' ? valor : valorAnterior.telefone,
-                // Mesma lógica para o email.
-                campo === 'email' ? valor : valorAnterior.email,
-            )
-        );
+        setCliente(valorAnterior => ({ ...valorAnterior, [campo]: valor }));
     }
 
-    // Função executada ao enviar o formulário. É async porque faz uma requisição HTTP.
-    // Recebe um FormData (dados do form), mas ele não é usado: o código usa o estado "cliente".
-    const handlerSalvar = async (formData: FormData) => {
+    const handlerSalvar = async () => {
 
-        // try/catch: se a requisição falhar, cai no catch.
         try {
-            // Envia um POST para o back-end Spring Boot com o cliente no corpo (convertido em JSON).
-            // "await" espera a resposta. <Cliente> indica o tipo do dado retornado.
-            // (var funciona, mas o recomendado hoje é const.)
-            var dadosRetorno = await axios.post<Cliente>("http://localhost:8080/clientes", cliente);
-
-            // 200 = OK e 201 = Created (recurso criado). Ambos indicam sucesso.
-            if (dadosRetorno.status === 200 || dadosRetorno.status === 201) {
-                // Avisa o usuário que deu certo.
-                alert("Cliente foi criado com sucesso");
-                // Redireciona para a listagem de clientes.
-                router.push("/clientes");
+            if (clienteExistente) {
+                await atualizarCliente(cliente);
+                alert("Cliente foi atualizado com sucesso");
             } else {
-                // Qualquer outro status: mostra o que a API devolveu.
-                alert(dadosRetorno.data);
+                await salvarCliente(cliente);
+                alert("Cliente foi criado com sucesso");
             }
-        // O axios lança exceção para status de erro (400, 500...) e falhas de rede.
+            router.push("/clientes");
         } catch (error) {
-            // Mensagem genérica de erro.
-            alert("Erro ao criar cliente");
+            alert(mensagemDeErro(error, "Erro ao salvar cliente"));
         }
 
     }
 
-    // O return define o que aparece na tela (JSX = HTML dentro do JavaScript).
     return (
 
         // <form> com "action": no React 19/Next.js, passar uma função aqui faz o React chamá-la
         // ao enviar o formulário (clique em Salvar ou Enter). Ela recebe o FormData.
         // Classes Tailwind: fundo branco, borda, cantos arredondados, sombra, espaçamento interno (p-8),
         // espaço vertical entre filhos (space-y-5), largura máxima (max-w-lg) e centralizado (mx-auto).
-        <form action={handlerSalvar} className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 space-y-5 max-w-lg mx-auto">
+        <form action={handlerSalvar} className="bg-white border border-slate-200 rounded-2xl shadow-md p-8 space-y-5">
             {/* Div que agrupa todos os campos e os botões */}
             <div>
                 {/* Grupo do campo Nome (space-y-1.5 = pequeno espaço entre label e input) */}
@@ -105,7 +62,7 @@ export default function ClienteForm() {
                         // A cada tecla digitada, chama handlerChange informando o campo e o novo texto (e.target.value).
                         onChange={(e) => handlerChange('nome', e.target.value)}
                         // Estilo: largura total, borda, cantos arredondados; ao focar (focus:), mostra um anel azul.
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E8590C] focus:border-transparent transition-all"
                     />
                 </div>
                 {/* Grupo do campo CPF (mt-5 = margem acima, para separar do campo anterior) */}
@@ -123,7 +80,7 @@ export default function ClienteForm() {
                         value={cliente.cpf}
                         // Atualiza o campo "cpf" no estado a cada digitação.
                         onChange={(e) => handlerChange('cpf', e.target.value)}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E8590C] focus:border-transparent transition-all"
                     />
                 </div>
                 {/* Grupo do campo Telefone */}
@@ -139,7 +96,7 @@ export default function ClienteForm() {
                         placeholder="(00) 00000-0000"
                         value={cliente.telefone}
                         onChange={(e) => handlerChange('telefone', e.target.value)}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E8590C] focus:border-transparent transition-all"
                     />
                 </div>
                 {/* Grupo do campo Email */}
@@ -155,7 +112,7 @@ export default function ClienteForm() {
                         placeholder="cliente@email.com"
                         value={cliente.email}
                         onChange={(e) => handlerChange('email', e.target.value)}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E8590C] focus:border-transparent transition-all"
                     />
                 </div>
                 {/* Área dos botões: lado a lado (flex), alinhados à direita (justify-end), com espaço entre eles (gap-3) */}
@@ -170,7 +127,7 @@ export default function ClienteForm() {
                     {/* type="submit" dispara o envio do formulário, que executa o handlerSalvar (via action do form) */}
                     <button
                         type="submit"
-                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
+                        className="px-5 py-2.5 bg-[#E8590C] hover:bg-[#C94A08] text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
                     >
                         Salvar
                     </button>

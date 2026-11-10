@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -75,6 +76,23 @@ export default function Home() {
           .nav-links.open{transform:translateX(0);}
           .menu-toggle{display:block;}
         }
+        section.frota{padding:40px 0 80px;position:relative;z-index:1;}
+        .frota-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;margin-top:40px;}
+        .car{background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:transform .25s,border-color .25s;display:flex;flex-direction:column;}
+        .car:hover{transform:translateY(-6px);border-color:rgba(232,89,12,0.5);}
+        .car-top{height:120px;background:linear-gradient(135deg,rgba(232,89,12,0.28),rgba(255,122,46,0.06));display:flex;align-items:center;justify-content:center;color:var(--orange2);position:relative;}
+        .car-tag{position:absolute;top:14px;left:14px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,0.35);border:1px solid var(--line);}
+        .car-body{padding:22px;display:flex;flex-direction:column;gap:6px;flex:1;}
+        .car-body h3{font-size:19px;}
+        .car-body .ano{font-size:13px;color:var(--muted);}
+        .car-body .desc{font-size:13.5px;color:var(--muted);line-height:1.5;min-height:40px;}
+        .car-price{margin-top:10px;font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;}
+        .car-price small{font-size:13px;font-weight:500;color:var(--muted);}
+        .car-btn{margin-top:14px;width:100%;}
+        .car-signup{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;}
+        .car-signup:hover{color:var(--orange2);}
+        .frota-msg{text-align:center;color:var(--muted);margin-top:40px;}
+        .frota-cta{text-align:center;margin-top:36px;color:var(--muted);font-size:14.5px;}
       `}</style>
 
       <header>
@@ -90,11 +108,11 @@ export default function Home() {
             <div className={`nav-links ${menuOpen ? "open" : ""}`} id="navLinks">
               <a href="#recursos" onClick={() => setMenuOpen(false)}>Recursos</a>
               <a href="#historia" onClick={() => setMenuOpen(false)}>História</a>
-              <a href="#login" onClick={() => setMenuOpen(false)}>Entrar</a>
+              <Link href="/login" onClick={() => setMenuOpen(false)}>Entrar</Link>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <a href="#login" className="btn btn-primary">Entrar</a>
+              <Link href="/login" className="btn btn-primary">Entrar</Link>
               <button
                 className="menu-toggle"
                 aria-label="Menu"
@@ -113,7 +131,7 @@ export default function Home() {
           <h1>Alugue um carro <em>sem enrolação</em>, pro seu dia a dia.</h1>
           <p>Frota revisada, reserva em minutos e suporte de verdade em cada quilômetro rodado.</p>
           <div className="hero-actions">
-            <a href="#recursos" className="btn btn-primary">Reservar agora</a>
+            <a href="#frota" className="btn btn-primary">Ver a frota</a>
             <a href="#historia" className="btn btn-ghost">Nossa história</a>
           </div>
 
@@ -143,6 +161,8 @@ export default function Home() {
         </div>
       </section>
 
+      <Frota />
+
       <section className="features" id="historia">
         <div className="wrap">
           <div className="section-head">
@@ -154,10 +174,9 @@ export default function Home() {
 
       <div className="cta" id="login">
         <h2>Pronto para pegar a estrada?</h2>
-        <p>Crie sua conta e reserve seu próximo carro agora mesmo.</p>
+        <p>Entre com a sua conta de atendente e gerencie as locações agora mesmo.</p>
         <div className="cta-actions">
-          <a href="#" className="btn btn-primary">Entrar</a>
-          <a href="#" className="btn btn-ghost">Criar conta</a>
+          <Link href="/login" className="btn btn-primary">Entrar</Link>
         </div>
       </div>
 
@@ -170,5 +189,76 @@ export default function Home() {
         </div>
       </footer>
     </>
+  );
+}
+interface VeiculoPublico {
+  id: number;
+  marca: string;
+  modelo: string;
+  ano: string;
+  valorDiaria: number;
+  categoriaNome: string | null;
+  categoriaDescricao: string | null;
+}
+
+// Vitrine publica: busca os veiculos disponiveis sem login (GET /publico/veiculos).
+function Frota() {
+  const [veiculos, setVeiculos] = useState<VeiculoPublico[] | null>(null);
+  const [erro, setErro] = useState(false);
+
+  useEffect(() => {
+    const url = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080") + "/publico/veiculos";
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(setVeiculos)
+      .catch(() => setErro(true));
+  }, []);
+
+  return (
+    <section className="frota" id="frota">
+      <div className="wrap">
+        <div className="section-head">
+          <h2>Nossa frota disponível</h2>
+          <p>Escolha o carro ideal para a sua viagem. Valores por diária, com seguro incluso.</p>
+        </div>
+
+        {erro && <p className="frota-msg">Não foi possível carregar a frota agora. Tente novamente em instantes.</p>}
+        {!erro && veiculos === null && <p className="frota-msg">Carregando veículos...</p>}
+        {veiculos !== null && veiculos.length === 0 && (
+          <p className="frota-msg">Nenhum veículo disponível no momento. Volte em breve!</p>
+        )}
+
+        {veiculos !== null && veiculos.length > 0 && (
+          <>
+            <div className="frota-grid">
+              {veiculos.map((v) => (
+                <div className="car" key={v.id}>
+                  <div className="car-top">
+                    {v.categoriaNome && <span className="car-tag">{v.categoriaNome}</span>}
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="11" width="18" height="7" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                      <path d="M5 11l2-5h10l2 5" stroke="currentColor" strokeWidth="1.6" />
+                      <circle cx="7.5" cy="18" r="1.6" fill="currentColor" />
+                      <circle cx="16.5" cy="18" r="1.6" fill="currentColor" />
+                    </svg>
+                  </div>
+                  <div className="car-body">
+                    <h3>{v.marca} {v.modelo}</h3>
+                    <span className="ano">Ano {v.ano}</span>
+                    <p className="desc">{v.categoriaDescricao ?? ""}</p>
+                    <div className="car-price">
+                      {v.valorDiaria.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} <small>/ dia</small>
+                    </div>
+                    <Link href={`/login?alugar=${v.id}`} className="btn btn-primary car-btn">Alugar</Link>
+                    <Link href={`/cadastro?alugar=${v.id}`} className="car-signup">Não tem cadastro? Cadastre-se</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="frota-cta">Clique em &ldquo;Alugar&rdquo; no carro que gostou, entre ou cadastre-se e retire o seu na nossa loja em Criciúma, SC.</p>
+          </>
+        )}
+      </div>
+    </section>
   );
 }

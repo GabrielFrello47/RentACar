@@ -1,76 +1,45 @@
-// Diz ao Next.js que este componente roda no NAVEGADOR (Client Component).
-// Necessário porque usamos useState, useEffect e eventos de clique.
 "use client";
 
-// Importa o tipo Cliente (interface com id, nome, cpf, telefone, email).
-// O "@/" é um atalho configurado no tsconfig que aponta para a raiz do src.
 import { Cliente } from "@/app/types/cliente";
-// Importa o axios, biblioteca para fazer requisições HTTP (GET, POST, DELETE...) à API.
-import axios from "axios";
-// Importa o Link do Next.js: cria links de navegação entre páginas sem recarregar a página toda.
+import { buscarListaClientes, deletarCliente } from "@/app/services/clienteService";
+import { mensagemDeErro } from "@/app/services/api";
 import Link from "next/link";
-// Importa dois hooks do React: useEffect (executar código em momentos do ciclo de vida)
-// e useState (guardar valores que, ao mudar, atualizam a tela).
 import { useEffect, useState } from "react";
 
-// Declara o componente da página. "export default" faz dele o componente principal deste arquivo
-// (no App Router do Next.js, é o que aparece na rota /clientes).
 export default function Clientes(){
 
-    // Cria o estado "clientes" (a lista) e a função "setClientes" para alterá-la.
-    // <Cliente[]> indica que é um array de Cliente; começa como array vazio [].
     const [clientes,setClientes] = useState<Cliente[]>([]);
 
-    // useEffect executa o código de dentro quando o componente é exibido na tela.
+    // contador usado para recarregar a lista depois de excluir/alterar
+    const [versao,setVersao] = useState(0);
+    const carregarDados = () => setVersao(v => v + 1);
+
     useEffect(()=>{
-        // Chama a função que busca os clientes na API.
-        carregarDados();
-    // O array vazio [] significa: execute SOMENTE UMA VEZ, na primeira renderização.
-    },[]);
+        const carregar = async ()=>{
+            try {
+                setClientes(await buscarListaClientes());
+            } catch (error) {
+                alert(mensagemDeErro(error, "Erro ao carregar dados!"));
+            }
+        };
+        carregar();
+    },[versao]);
 
-    // Função assíncrona (async) que busca os clientes. "await" só funciona dentro de funções async.
-    const carregarDados = async ()=>{
-
-        // try/catch: tenta executar o bloco e, se algo der errado, cai no catch.
-        try {
-            // Faz um GET no back-end Spring Boot e espera a resposta.
-            // <Cliente[]> diz ao TypeScript que o corpo da resposta é uma lista de clientes.
-            const dados = await axios.get<Cliente[]>("http://localhost:8080/clientes");
-
-            // dados.data é o corpo da resposta (a lista). Guardar no estado faz a tela atualizar.
-            setClientes(dados.data);
-
-        // Executado se a requisição falhar (API fora do ar, erro 500, etc.).
-        } catch (error) {
-            // Mostra um aviso simples para o usuário.
-            alert("Erro ao carregar dados!")
-        }
-
-
-    }
-
-    // Função chamada ao clicar em "Excluir". Recebe o id do cliente a ser removido.
     const handleDeletar = async (id: number) => {
 
-        // confirm() abre uma caixa Ok/Cancelar do navegador e retorna true ou false.
         const confirmar = confirm("Tem certeza que deseja excluir este cliente?");
-        // Se o usuário clicou em Cancelar, sai da função sem fazer nada.
         if (!confirmar) return;
 
         try {
-            // Envia um DELETE para a API. A crase (`) permite inserir o id dentro do texto com ${id}.
-            await axios.delete(`http://localhost:8080/clientes/${id}`);
-            // Depois de excluir, busca a lista de novo para a tabela refletir a remoção.
-            await carregarDados();
+            await deletarCliente(id);
+            carregarDados();
         } catch (error) {
-            // Se o DELETE falhar, avisa o usuário.
-            alert("Erro ao excluir cliente!");
+            alert(mensagemDeErro(error, "Erro ao excluir cliente!"));
         }
 
     }
 
 
-    // O return define o que será desenhado na tela (JSX = HTML dentro do JavaScript).
     return (
         // Container geral da página. Tailwind: min-h-screen (altura mínima = tela inteira),
         // w-full (largura total), bg-slate-50 (fundo cinza claro), p-6/md:p-8 (espaçamento interno,
@@ -87,7 +56,7 @@ export default function Clientes(){
                     hover: muda a cor ao passar o mouse; focus: mostra um anel ao navegar pelo teclado. */}
                 <Link
                     href="/clientes/novo"
-                    className="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="inline-flex items-center justify-center px-4 py-2.5 bg-[#E8590C] hover:bg-[#C94A08] text-white font-medium text-sm rounded-lg shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#E8590C] focus:ring-offset-2"
                 >
                     Novo Cliente
                 </Link>

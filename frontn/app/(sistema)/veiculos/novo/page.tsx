@@ -1,24 +1,11 @@
-import Link from "next/link";
 import VeiculosForm from "../components/VeiculosForm";
+import CabecalhoCadastro from "@/app/components/CabecalhoCadastro";
 
 export default function CadastroVeiculo() {
 
 return (
-    <div>
-        <div>
-            <Link href="/veiculos">
-                Voltar para Listagem
-            </Link>
-        </div>
-        <h1>
-            Novo Veiculo
-        </h1>
-        <p>
-            Preencha os dados abaixo para cadastrar um novo Veiculo
-        </p>
-        <div>
+        <CabecalhoCadastro voltarHref="/veiculos" titulo="Novo Veiculo" descricao="Preencha os dados abaixo para cadastrar um novo Veiculo">
             <VeiculosForm/>
-        </div>
-    </div>
-)
+        </CabecalhoCadastro>
+    )
 }

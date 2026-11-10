@@ -1,24 +1,11 @@
-import Link from "next/link";
 import LocacoesForm from "../components/LocacoesForm";
+import CabecalhoCadastro from "@/app/components/CabecalhoCadastro";
 
 export default function CadastroLocacao() {
 
 return (
-    <div>
-        <div>
-            <Link href="/locacoes">
-                Voltar para Listagem
-            </Link>
-        </div>
-        <h1>
-            Nova Locacao
-        </h1>
-        <p>
-            Preencha os dados abaixo para cadastrar uma nova Locacao
-        </p>
-        <div>
+        <CabecalhoCadastro voltarHref="/locacoes" titulo="Nova Locacao" descricao="Preencha os dados abaixo para cadastrar uma nova Locacao">
             <LocacoesForm/>
-        </div>
-    </div>
-)
+        </CabecalhoCadastro>
+    )
 }

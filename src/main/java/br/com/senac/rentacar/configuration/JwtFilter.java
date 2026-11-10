@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -26,12 +25,18 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String uri  = request.getRequestURI();
 
-        if(uri.startsWith("/swagger-ui")
+        if(request.getMethod().equals("OPTIONS")      // pre-flight do CORS nao leva token
+                || uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v2/api-docs")
                 || uri.startsWith("/v3/api-docs")
                 || uri.startsWith("/swagger-resources")
-                || uri.startsWith("webjars")
+                || uri.startsWith("/webjars")
                 || uri.startsWith("/auth/login")
+                || (request.getMethod().equals("POST") && uri.equals("/auth/cadastro"))
+                // vitrine publica da landing page (somente leitura)
+                || (request.getMethod().equals("GET") && uri.equals("/publico/veiculos"))
+                // o desktop cria o admin sem token; quem protege e a secretKey do servidor
+                || (request.getMethod().equals("POST") && uri.equals("/usuarios/admin"))
         ){
             filterChain.doFilter(request,response);
             return;
@@ -42,7 +47,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if(authHeader!= null && authHeader.startsWith("Bearer ")){
-            String token = authHeader.replace("Bearer ","");
+            String token = authHeader.substring("Bearer ".length());
 
             try{
 

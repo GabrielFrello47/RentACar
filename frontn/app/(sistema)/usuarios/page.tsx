@@ -1,6 +1,7 @@
 "use client"
 import { Usuario } from "@/app/types/usuario";
-import axios from "axios";
+import { atualizarStatusUsuario, buscarListaUsuarios, deletarUsuario } from "@/app/services/usuarioService";
+import { mensagemDeErro } from "@/app/services/api";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -9,66 +10,48 @@ export default function Usuarios(){
 
     const [usuarios,setUsuarios] = useState<Usuario[]>([]);
 
+    // contador usado para recarregar a lista depois de excluir/alterar
+    const [versao,setVersao] = useState(0);
+    const carregarDados = () => setVersao(v => v + 1);
+
     useEffect(()=>{
-        carregarDados();
-    },[]);
-
-    const carregarDados = async ()=>{
-
-        try {
-            const dados = await axios.get<Usuario[]>("http://localhost:8080/usuarios");
-
-            setUsuarios( dados.data);
-
-        } catch (error) {
-            alert("Erro ao carregar dados!")
-        }
-       
-
-    }
+        const carregar = async ()=>{
+            try {
+                setUsuarios(await buscarListaUsuarios());
+            } catch (error) {
+                alert(mensagemDeErro(error, "Erro ao carregar dados!"));
+            }
+        };
+        carregar();
+    },[versao]);
 
     const handleDeletarUsuario = async(usuario:Usuario) =>{
 
-        var dadosRetorno = await  
-        axios.delete('http://localhost:8080/usuarios/'+usuario.id+'/excluir');
+        if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
 
-        if(dadosRetorno.status==200){
+        try {
+            await deletarUsuario(usuario.id || 0);
             alert("Excluido com sucesso!");
-        }else{
-            alert(dadosRetorno.data);
-
+        } catch (error) {
+            alert(mensagemDeErro(error, "Erro ao excluir usuário!"));
             return;
         }
 
         carregarDados();
-
     }
 
     const handleAlterarStatusUsuario = async(usuario:Usuario) =>{
 
-
-        var novoStatus = {};
-        if(usuario.status ==="ATIVO"){
-            novoStatus = {status:"BLOQUEADO"}
-        }else{
-            novoStatus = {status:"ATIVO"}
-        }
-
-        var dadosRetorno = await  
-        axios.patch('http://localhost:8080/usuarios/'+usuario.id+'/status',novoStatus);
-
-        if(dadosRetorno.status==200){
-            alert("Atulizado status com sucesso!");
-        }else{
-            alert(dadosRetorno.data);
-
+        try {
+            await atualizarStatusUsuario(usuario);
+            alert("Atualizado status com sucesso!");
+        } catch (error) {
+            alert(mensagemDeErro(error, "Erro ao atualizar status!"));
             return;
         }
 
         carregarDados();
-
     }
-    
 
     return (
         <div className="w-full bg-slate-50 p-6 md:p-8 font-sans">
@@ -78,7 +61,7 @@ export default function Usuarios(){
                 </h1>
                 <Link 
                     href="/usuarios/novo"
-                    className="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="inline-flex items-center justify-center px-4 py-2.5 bg-[#E8590C] hover:bg-[#C94A08] text-white font-medium text-sm rounded-lg shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#E8590C] focus:ring-offset-2"
                 >
                     Novo Usuário
                 </Link>

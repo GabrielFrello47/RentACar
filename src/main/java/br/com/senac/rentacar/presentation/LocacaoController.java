@@ -1,5 +1,8 @@
 package br.com.senac.rentacar.presentation;
 
+import br.com.senac.rentacar.application.DTOs.DevolucaoRequest;
+import br.com.senac.rentacar.application.DTOs.DevolucaoResponse;
+import br.com.senac.rentacar.application.services.LocacaoService;
 import br.com.senac.rentacar.domain.entities.Locacao;
 import br.com.senac.rentacar.domain.respository.LocacaoRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +19,9 @@ public class LocacaoController {
 
     @Autowired
     private LocacaoRepository locacaoRepository;
+
+    @Autowired
+    private LocacaoService locacaoService;
 
     @GetMapping
     @Operation(summary = "Metodo de listagem de locacoes", description = "Metodo responsavel por listar todas as locacoes cadastradas!")
@@ -38,40 +44,55 @@ public class LocacaoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Metodo de criar de locacoes", description = "Metodo responsavel de criação de novas locacoes!")
-    public ResponseEntity<Locacao> criar(@RequestBody Locacao locacao){
+    @Operation(summary = "Metodo de criar de locacoes",
+            description = "Cria a locacao. Veiculos Em Manutencao ou Alugados sao recusados (400).")
+    public ResponseEntity<?> criar(@RequestBody Locacao locacao){
 
-        var locacaoBanco = locacaoRepository.save(locacao);
-        return ResponseEntity.ok(locacaoBanco);
+        try {
+            return ResponseEntity.ok(locacaoService.criar(locacao));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Metodo de atualizacao de locacoes", description = "Metodo responsavel por atualizar os dados de uma locacao existente!")
-    public ResponseEntity<Locacao> atualizar(@PathVariable Long id, @RequestBody Locacao locacao) {
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody Locacao locacao) {
+
         try {
-            Locacao locacaoBanco = locacaoRepository.findById(id).orElse(null);
-
-            if (locacaoBanco != null) {
-                locacaoBanco.setDataInicio(locacao.getDataInicio());
-                locacaoBanco.setDataFim(locacao.getDataFim());
-                locacaoBanco.setValorTotal(locacao.getValorTotal());
-                locacaoBanco.setCliente(locacao.getCliente());
-                locacaoBanco.setVeiculo(locacao.getVeiculo());
-                locacaoRepository.save(locacaoBanco);
-                return ResponseEntity.ok().build();
+            Locacao atualizada = locacaoService.atualizar(id, locacao);
+            if (atualizada == null) {
+                return ResponseEntity.notFound().build();
             }
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
-            return ResponseEntity.notFound().build();
+    @PatchMapping("/{id}/devolucao")
+    @Operation(summary = "Registrar devolucao",
+            description = "Finaliza a locacao, libera o veiculo e atualiza a quilometragem. "
+                    + "Se o veiculo passou do limite de km desde a ultima revisao, devolve alertaRevisao=true.")
+    public ResponseEntity<?> devolver(@PathVariable Long id, @RequestBody DevolucaoRequest request) {
 
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+        try {
+            DevolucaoResponse resposta = locacaoService.devolver(id, request.quilometragemFinal());
+            if (resposta == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(resposta);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Metodo de exclusao de locacoes", description = "Metodo responsavel por excluir uma locacao existente!")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        locacaoRepository.deleteById(id);
+        if (!locacaoService.excluir(id)) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok().build();
     }
 
